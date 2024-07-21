@@ -10,7 +10,7 @@ import lombok.*;
 @Table(name = "roles")
 @AllArgsConstructor
 @NoArgsConstructor
-@MappedSuperclass
+@Builder
 public class Role {
 
     @Id

@@ -12,7 +12,7 @@ import java.util.Date;
 @Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
-@MappedSuperclass
+@Builder
 public class User extends BaseEntity{
 
     @Id

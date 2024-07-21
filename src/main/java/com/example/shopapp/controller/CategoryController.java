@@ -1,7 +1,10 @@
 package com.example.shopapp.controller;
 
 import com.example.shopapp.dto.CategoryDTO;
+import com.example.shopapp.entity.Category;
+import com.example.shopapp.service.CategoryService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -12,14 +15,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/category")
+@RequiredArgsConstructor
 public class CategoryController {
 
+    private final CategoryService categoryService;
+
     @GetMapping
-    public ResponseEntity<String> getAllCategory(
+    public ResponseEntity<List<Category>> getAllCategories(
             @RequestParam("page") int page,
             @RequestParam("limit") int limit
     ) {
-        return ResponseEntity.ok(String.format("get all category, page = %d, limit = %d", page, limit));
+        List<Category> categories = categoryService.getAllCategory();
+        return ResponseEntity.ok(categories);
     }
 
     @PostMapping
@@ -33,16 +40,22 @@ public class CategoryController {
                     .toList();
             return ResponseEntity.badRequest().body(errorMessages);
         }
-        return ResponseEntity.ok("Category created " + categoryDTO);
+        categoryService.createCategory(categoryDTO);
+        return ResponseEntity.ok("Insert Category Successfully!");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateCategory(@PathVariable Long id){
-        return ResponseEntity.ok("Update Category with id = " + id);
+    public ResponseEntity<String> updateCategory(
+            @PathVariable Long id,
+            @Valid @RequestBody CategoryDTO categoryDTO
+    ){
+        categoryService.updateCategory(id,categoryDTO);
+        return ResponseEntity.ok("Update Category Successfully!");
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id){
-        return ResponseEntity.ok("delete category with id = " + id);
+        categoryService.deleteCategory(id);
+        return ResponseEntity.ok("Delete Category with ID = " + id + "successfully!");
     }
 }
