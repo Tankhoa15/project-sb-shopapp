@@ -1,0 +1,112 @@
+package com.example.shopapp.service.impl;
+
+import com.example.shopapp.dto.ProductDTO;
+import com.example.shopapp.dto.ProductImageDTO;
+import com.example.shopapp.entity.Category;
+import com.example.shopapp.entity.Product;
+import com.example.shopapp.entity.ProductImage;
+import com.example.shopapp.exception.DataNotFoundException;
+import com.example.shopapp.exception.InvalidParamException;
+import com.example.shopapp.repository.CategoryRepository;
+import com.example.shopapp.repository.ProductImageRepository;
+import com.example.shopapp.repository.ProductRepository;
+import com.example.shopapp.service.ProductService;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+@Service
+@AllArgsConstructor
+public class ProductServiceImpl implements ProductService {
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductImageRepository productImageRepository;
+
+    @Override
+    public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
+        Category existingCategory = categoryRepository
+                .findById(productDTO.getCategoryId())
+                .orElseThrow(() -> new DataNotFoundException
+                        ("Cannot find category id: " + productDTO.getCategoryId()));
+
+        Product newProduct = Product.builder()
+                .name(productDTO.getName())
+                .price(productDTO.getPrice())
+                .description(productDTO.getDescription())
+                .thumbnail(productDTO.getThumbnail())
+                .categoryId(existingCategory)
+                .build();
+        return productRepository.save(newProduct);
+    }
+
+    @Override
+    public Product getProductById(long id) {
+        try {
+            return productRepository.findById(id)
+                    .orElseThrow(() -> new DataNotFoundException("Cannot find product id: "+id));
+        } catch (DataNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Page<Product> getAllProducts(PageRequest pageRequest) {
+        return productRepository.findAll(pageRequest);
+    }
+
+    @Override
+    public Product updateProduct(long id, ProductDTO productDTO) throws Exception{
+        Product existingProduct = getProductById(id);
+        if(existingProduct != null){
+
+            Category category = categoryRepository
+                    .findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new DataNotFoundException
+                            ("Cannot find category id: " + productDTO.getCategoryId()));
+
+            existingProduct.setName(productDTO.getName());
+            existingProduct.setCategoryId(category);
+            existingProduct.setPrice(productDTO.getPrice());
+            existingProduct.setDescription(productDTO.getDescription());
+            existingProduct.setThumbnail(productDTO.getThumbnail());
+        }
+        return productRepository.save(existingProduct);
+    }
+
+    @Override
+    public void deleteProduct(long id) {
+        Product existingProduct = getProductById(id);
+        if(existingProduct != null){
+            productRepository.delete(existingProduct);
+        }
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return productRepository.existsByName(name);
+    }
+
+    @Override
+    public ProductImage createProductImage(
+            Long productId,ProductImageDTO productImageDTO
+    ) throws Exception {
+        Product existingProduct = productRepository.findById(productImageDTO.getProductId())
+                .orElseThrow(() -> new DataNotFoundException
+                        ("Cannot find product id: "+productImageDTO.getProductId()));
+
+        ProductImage newProductImage = ProductImage.builder()
+                .product(existingProduct)
+                .imageUrl(productImageDTO.getImageUrl())
+                .build();
+
+        int size = productImageRepository.findByProductId(productId).size();
+        if(size >= 5){
+            throw new InvalidParamException("Cannot add more than 5 images");
+        }
+
+        return productImageRepository.save(newProductImage);
+    }
+
+}
