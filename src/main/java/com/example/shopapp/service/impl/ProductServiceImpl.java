@@ -2,6 +2,7 @@ package com.example.shopapp.service.impl;
 
 import com.example.shopapp.dto.ProductDTO;
 import com.example.shopapp.dto.ProductImageDTO;
+import com.example.shopapp.dto.response.ProductResponse;
 import com.example.shopapp.entity.Category;
 import com.example.shopapp.entity.Product;
 import com.example.shopapp.entity.ProductImage;
@@ -52,8 +53,18 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<Product> getAllProducts(PageRequest pageRequest) {
-        return productRepository.findAll(pageRequest);
+    public Page<ProductResponse> getAllProducts(PageRequest pageRequest) {
+        return productRepository.findAll(pageRequest).map(product -> {
+                ProductResponse productResponse = ProductResponse.builder()
+                        .name(product.getName())
+                        .price(product.getPrice())
+                        .description(product.getDescription())
+                        .categoryId(product.getCategoryId().getId())
+                        .build();
+                productResponse.setCreatedAt(product.getCreatedAt());
+                productResponse.setUpdatedAt(product.getUpdatedAt());
+                return productResponse;
+        });
     }
 
     @Override
@@ -89,10 +100,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductImage createProductImage(
-            Long productId,ProductImageDTO productImageDTO
-    ) throws Exception {
-        Product existingProduct = productRepository.findById(productImageDTO.getProductId())
+    public ProductImage createProductImage(Long productId,ProductImageDTO productImageDTO) throws Exception {
+        Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new DataNotFoundException
                         ("Cannot find product id: "+productImageDTO.getProductId()));
 
@@ -102,8 +111,8 @@ public class ProductServiceImpl implements ProductService {
                 .build();
 
         int size = productImageRepository.findByProductId(productId).size();
-        if(size >= 5){
-            throw new InvalidParamException("Cannot add more than 5 images");
+        if(size >= ProductImage.MAX_IMG_OF_PRODUCT){
+            throw new InvalidParamException("Number of images must be < " + ProductImage.MAX_IMG_OF_PRODUCT);
         }
 
         return productImageRepository.save(newProductImage);
