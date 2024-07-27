@@ -6,7 +6,9 @@ import com.example.shopapp.dto.response.ProductListResponse;
 import com.example.shopapp.dto.response.ProductResponse;
 import com.example.shopapp.entity.Product;
 import com.example.shopapp.entity.ProductImage;
+import com.example.shopapp.exception.DataNotFoundException;
 import com.example.shopapp.service.ProductService;
+import com.github.javafaker.Faker;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -161,5 +163,28 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id){
         return ResponseEntity.ok("Delete Product successfully!");
+    }
+
+    //@PostMapping("generateFakeProducts")
+    private ResponseEntity<String> genarateFakeProducts(){
+        Faker faker = new Faker();
+        for(int i = 0; i < 1000; i++){
+            String productName = faker.commerce().productName();
+            if(productService.existsByName(productName)){
+                continue;
+            }
+            ProductDTO productDTO = ProductDTO.builder()
+                    .name(productName)
+                    .price((float)faker.number().numberBetween(10, 1000))
+                    .description(faker.lorem().sentence())
+                    .categoryId((long)faker.number().numberBetween(1, 7))
+                    .build();
+            try {
+                productService.createProduct(productDTO);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+        }
+        return ResponseEntity.ok("Fake products are generated successfully!");
     }
 }
