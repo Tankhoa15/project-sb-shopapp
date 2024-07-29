@@ -54,17 +54,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getAllProducts(PageRequest pageRequest) {
-        return productRepository.findAll(pageRequest).map(product -> {
-                ProductResponse productResponse = ProductResponse.builder()
-                        .name(product.getName())
-                        .price(product.getPrice())
-                        .description(product.getDescription())
-                        .categoryId(product.getCategoryId().getId())
-                        .build();
-                productResponse.setCreatedAt(product.getCreatedAt());
-                productResponse.setUpdatedAt(product.getUpdatedAt());
-                return productResponse;
-        });
+        return productRepository.findAll(pageRequest).map(ProductResponse::fromProduct);
     }
 
     @Override

@@ -145,7 +145,7 @@ public class ProductController {
             @RequestParam("page") int page,
             @RequestParam("limit") int limit
     ){
-        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("createdAt").descending());
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("createdAt").ascending());
         Page<ProductResponse> productPage = productService.getAllProducts(pageRequest);
         int totalPage = productPage.getTotalPages();
         List<ProductResponse> products = productPage.getContent();
@@ -156,12 +156,14 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<String> getProductById(@PathVariable Long id){
-        return ResponseEntity.ok("Product with ID: " + id);
+    public ResponseEntity<?> getProductById(@PathVariable("id") Long id){
+        Product product = productService.getProductById(id);
+        return ResponseEntity.ok(ProductResponse.fromProduct(product));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id){
+        productService.deleteProduct(id);
         return ResponseEntity.ok("Delete Product successfully!");
     }
 
@@ -187,4 +189,18 @@ public class ProductController {
         }
         return ResponseEntity.ok("Fake products are generated successfully!");
     }
+
+    // update product
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,@RequestBody ProductDTO productDTO
+    ){
+        try {
+            Product product = productService.updateProduct(id, productDTO);
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }
