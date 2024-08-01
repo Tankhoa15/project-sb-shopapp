@@ -12,13 +12,13 @@ import com.example.shopapp.repository.CategoryRepository;
 import com.example.shopapp.repository.ProductImageRepository;
 import com.example.shopapp.repository.ProductRepository;
 import com.example.shopapp.service.ProductService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
