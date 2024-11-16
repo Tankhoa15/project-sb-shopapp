@@ -1,5 +1,6 @@
 package com.example.shopapp.service.impl;
 
+import com.example.shopapp.components.JwtTokenUtil;
 import com.example.shopapp.dto.UserDTO;
 import com.example.shopapp.entity.Role;
 import com.example.shopapp.entity.User;
@@ -9,6 +10,9 @@ import com.example.shopapp.repository.UserRepository;
 import com.example.shopapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +25,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final AuthenticationManager authenticationManager;
 
     @Override
     public User createUser(UserDTO userDTO) throws DataNotFoundException {
@@ -52,11 +58,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User login(String phoneNumber, String password) throws Exception{
+    public String login(String phoneNumber, String password) throws Exception{
         Optional<User> optionalUser = userRepository.findByPhoneNumber(phoneNumber);
         if(optionalUser.isEmpty()) {
             throw new DataNotFoundException("Invalid phone number or password");
         }
-        return optionalUser.get();
+        //return optionalUser.get();
+        User existingUser = optionalUser.get();
+
+        if(existingUser.getFacebookAccountId() == 0 && existingUser.getGoogleAccountId() == 0){
+            if(!passwordEncoder.matches(password, existingUser.getPassword())){
+                throw new BadCredentialsException("Wrong phone number or password");
+            }
+        }
+
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(phoneNumber, password);
+        authenticationManager.authenticate(authenticationToken);
+        return jwtTokenUtil.generateToken(existingUser);
     }
 }
