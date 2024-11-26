@@ -73,7 +73,8 @@ public class UserServiceImpl implements UserService {
         }
 
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(phoneNumber, password);
+                new UsernamePasswordAuthenticationToken(phoneNumber, password, existingUser.getAuthorities()
+                );
         authenticationManager.authenticate(authenticationToken);
         return jwtTokenUtil.generateToken(existingUser);
     }
